@@ -1,0 +1,42 @@
+# Байт-код и кэш
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Сборки и пакеты
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+wheels/
+pip-wheel-metadata/
+
+# Тесты и покрытие
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+
+# Виртуальные окружения
+.venv/
+venv/
+env/
+ENV/
+
+# Окружение и IDE
+.env
+.idea/
+.vscode/
+*.swp
+
+# Типизация
+.mypy_cache/
+.dmypy.json
+.pyright/
+.pytype/
