@@ -20,7 +20,7 @@
 .
 ├── data/                 # внешние файлы данных (CSV)
 ├── docs/                 # ход выполнения практики
-├── src/calorie_calc/     # исходный код модуля (модель Product — models.py)
+├── src/calorie_calc/     # исходный код модуля (Product, import_products)
 ├── tests/                # автотесты
 ├── requirements.txt
 └── README.md
@@ -37,5 +37,7 @@ PYTHONPATH=src pytest
 
 - День 1 — каркас проекта.
 - День 2 — модель `Product`: идентификатор, название, калорийность и БЖУ на 100 г с проверкой базовых инвариантов.
+- День 3 — файл `data/products.csv` с 26 продуктами.
+- День 4 — `import_products`: чтение CSV (`name`, `kcal`, `protein`, `fat`, `carbs`) в список `Product`, версия 0.4.0.
 
-Импорт CSV, расчёт рациона и меню ещё не реализованы.
+Расчёт рациона и меню ещё не реализованы.
