@@ -42,7 +42,7 @@ def test_import_products_exported_from_package() -> None:
     import calorie_calc
 
     assert import_products is import_products_impl
-    assert calorie_calc.__version__ == "0.4.0"
+    assert calorie_calc.__version__ == "0.5.0"
 
 
 def test_import_products_maps_columns_and_assigns_ids(tmp_path: Path) -> None:
