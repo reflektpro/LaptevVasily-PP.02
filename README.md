@@ -20,7 +20,7 @@
 .
 ├── data/                 # внешние файлы данных (CSV)
 ├── docs/                 # ход выполнения практики
-├── src/calorie_calc/     # исходный код модуля (Product, import_products)
+├── src/calorie_calc/     # исходный код модуля (Product, import_products, ProductCatalog)
 ├── tests/                # автотесты
 ├── requirements.txt
 └── README.md
@@ -40,5 +40,6 @@ PYTHONPATH=src pytest
 - День 3 — файл `data/products.csv` с 26 продуктами.
 - День 4 — `import_products`: чтение CSV (`name`, `kcal`, `protein`, `fat`, `carbs`) в список `Product`, версия 0.4.0.
 - День 5 — проверка строк CSV: некорректные строки пропускаются, ошибки накапливаются в списке; обязательные поля и числа не меньше нуля. Версия 0.5.0.
+- День 6 — `ProductCatalog`: хранение продуктов и загрузка `data/products.csv` при создании каталога и при запуске модуля. Версия 0.6.0.
 
 Расчёт рациона и меню ещё не реализованы.
