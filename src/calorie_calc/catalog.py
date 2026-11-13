@@ -1,9 +1,13 @@
-"""Каталог продуктов: загрузка из CSV, поиск и изменение списка."""
+"""Каталог продуктов: загрузка из CSV, поиск, изменение списка и расчёт порции."""
 
 from pathlib import Path
 
 from calorie_calc.csv_import import CsvRowError, import_products
-from calorie_calc.models import Product
+from calorie_calc.models import (
+    PortionNutrients,
+    Product,
+    calculate_portion as _calculate_portion,
+)
 
 # Пакет лежит в src/calorie_calc, файл базы — в data/ у корня репозитория.
 _DEFAULT_PRODUCTS_CSV = (
@@ -19,7 +23,8 @@ class ProductCatalog:
     с заполненными обязательными полями и неотрицательными числами.
     Поиск по названию не учитывает регистр: точное совпадение и подстрока.
     Продукт можно добавить, обновить и удалить. Название в каталоге
-    уникально без учёта регистра.
+    уникально без учёта регистра. Для продукта из каталога считается
+    КБЖУ порции заданной массы.
     """
 
     def __init__(
@@ -109,6 +114,18 @@ class ProductCatalog:
         if index is None:
             raise ValueError("продукт не найден")
         return self._products.pop(index)
+
+    def calculate_portion(self, product: Product, grams: float) -> PortionNutrients:
+        """КБЖУ порции продукта из этого каталога.
+
+        Тот же расчёт, что у calculate_portion: пищевая ценность на 100 г
+        масштабируется на массу в граммах и округляется до двух знаков.
+        Масса должна быть больше нуля. Если продукта нет в каталоге,
+        расчёт не выполняется.
+        """
+        if product not in self._products:
+            raise ValueError("продукт не найден")
+        return _calculate_portion(product, grams)
 
     def find_by_name(self, query: str) -> tuple[Product, ...]:
         """Найти продукты по названию без учёта регистра.
