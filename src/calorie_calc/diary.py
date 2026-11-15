@@ -39,3 +39,25 @@ class MealEntry:
     def nutrients(self) -> PortionNutrients:
         """КБЖУ этой записи."""
         return calculate_portion(self.product, self.grams)
+
+
+def total_nutrients(entries) -> PortionNutrients:
+    """Сумма КБЖУ по списку записей рациона за день.
+
+    Для пустого списка возвращает нули. Итог округляется до двух знаков.
+    """
+    kcal = protein = fat = carbs = 0.0
+    for entry in entries:
+        if not isinstance(entry, MealEntry):
+            raise ValueError("ожидается запись рациона")
+        item = entry.nutrients()
+        kcal += item.kcal
+        protein += item.protein
+        fat += item.fat
+        carbs += item.carbs
+    return PortionNutrients(
+        kcal=round(kcal, 2),
+        protein=round(protein, 2),
+        fat=round(fat, 2),
+        carbs=round(carbs, 2),
+    )
