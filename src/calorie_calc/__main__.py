@@ -1,14 +1,10 @@
-"""Точка входа модуля. Логика калькулятора ещё не реализована."""
+"""Точка входа модуля: запуск консольного меню."""
 
-from calorie_calc import ProductCatalog
+from calorie_calc.cli import run
 
 
 def main() -> None:
-    catalog = ProductCatalog()
-    print(
-        "Модуль калькулятора калорий в разработке "
-        f"(день 9: расчёт порции, загружено продуктов: {len(catalog)})."
-    )
+    run()
 
 
 if __name__ == "__main__":
