@@ -35,3 +35,26 @@ def daily_norm(sex: str, weight: float, height: float, age: int,
     else:
         base -= 161
     return round(base * ACTIVITY_LEVELS[key], 2)
+
+
+def compare_with_norm(eaten: float, norm: float) -> dict:
+    """Сравнивает съеденные калории с дневной нормой.
+
+    Возвращает словарь: remaining — остаток до нормы (ккал, не меньше нуля),
+    excess — перебор (ккал, не меньше нуля), status — «в норме»,
+    «остаток» или «перебор».
+    """
+    for value in (eaten, norm):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError("калории и норма должны быть числами")
+    if eaten < 0:
+        raise ValueError("съеденные калории не могут быть отрицательными")
+    if norm <= 0:
+        raise ValueError("норма должна быть больше нуля")
+
+    diff = round(norm - eaten, 2)
+    if diff > 0:
+        return {"remaining": diff, "excess": 0.0, "status": "остаток"}
+    if diff < 0:
+        return {"remaining": 0.0, "excess": -diff, "status": "перебор"}
+    return {"remaining": 0.0, "excess": 0.0, "status": "в норме"}
