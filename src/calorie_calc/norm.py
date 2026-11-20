@@ -1,5 +1,7 @@
 """Дневная норма калорий по формуле Миффлина — Сан-Жеора."""
 
+import math
+
 ACTIVITY_LEVELS = {
     "минимальная": 1.2,
     "низкая": 1.375,
@@ -21,6 +23,8 @@ def daily_norm(sex: str, weight: float, height: float, age: int,
     for value in (weight, height, age):
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise ValueError("вес, рост и возраст должны быть числами")
+        if not math.isfinite(value):
+            raise ValueError("вес, рост и возраст должны быть конечными числами")
         if value <= 0:
             raise ValueError("вес, рост и возраст должны быть больше нуля")
     if not isinstance(activity, str):
@@ -47,6 +51,8 @@ def compare_with_norm(eaten: float, norm: float) -> dict:
     for value in (eaten, norm):
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise ValueError("калории и норма должны быть числами")
+        if not math.isfinite(value):
+            raise ValueError("калории и норма должны быть конечными числами")
     if eaten < 0:
         raise ValueError("съеденные калории не могут быть отрицательными")
     if norm <= 0:
