@@ -1,6 +1,7 @@
 """Импорт продуктов из CSV-файла."""
 
 import csv
+import io
 import math
 from dataclasses import dataclass
 from pathlib import Path
@@ -29,6 +30,13 @@ def import_products(
     """Прочитать UTF-8 CSV и вернуть список продуктов.
 
     Ожидаемые столбцы: name, kcal, protein, fat, carbs.
+    Метка BOM в начале файла (UTF-8 с BOM, как сохраняет Excel)
+    пропускается, пробелы вокруг названий столбцов отбрасываются.
+    Разделитель определяется по заголовку: запятая или точка
+    с запятой. В числах допускается десятичная запятая («6,5»).
+    Пустой файл или файл только с заголовком дают пустой список.
+    Файл не в UTF-8 не читается: в errors добавляется ошибка
+    строки 1, результат — пустой список.
     Столбца id в файле нет: идентификаторы назначаются принятым
     строкам по порядку, начиная с 1. Строка с пустым обязательным
     полем, нечисловым значением или числом меньше нуля пропускается
@@ -42,36 +50,53 @@ def import_products(
     found = [] if errors is None else errors
     products: list[Product] = []
 
-    with Path(path).open(encoding="utf-8", newline="") as csv_file:
-        reader = csv.DictReader(csv_file)
-        if reader.fieldnames is None:
-            return products
+    try:
+        text = Path(path).read_text(encoding="utf-8-sig")
+    except UnicodeDecodeError:
+        found.append(CsvRowError(1, "файл должен быть в кодировке UTF-8"))
+        return products
 
-        missing_columns = [
-            field
-            for field in _REQUIRED_FIELDS
-            if field not in reader.fieldnames
-        ]
-        if missing_columns:
-            found.append(
-                CsvRowError(
-                    1,
-                    "в заголовке нет обязательных столбцов: "
-                    + ", ".join(missing_columns),
-                )
+    first_line = text.splitlines()[0] if text else ""
+    reader = csv.DictReader(
+        io.StringIO(text, newline=""),
+        delimiter=_detect_delimiter(first_line),
+    )
+    if reader.fieldnames is None:
+        return products
+    reader.fieldnames = [name.strip() for name in reader.fieldnames]
+
+    missing_columns = [
+        field
+        for field in _REQUIRED_FIELDS
+        if field not in reader.fieldnames
+    ]
+    if missing_columns:
+        found.append(
+            CsvRowError(
+                1,
+                "в заголовке нет обязательных столбцов: "
+                + ", ".join(missing_columns),
             )
-            return products
+        )
+        return products
 
-        next_id = 1
-        for row in reader:
-            values, row_errors = _parse_row(reader.line_num, row)
-            if values is None:
-                found.extend(row_errors)
-                continue
-            products.append(_to_product(next_id, values))
-            next_id += 1
+    next_id = 1
+    for row in reader:
+        values, row_errors = _parse_row(reader.line_num, row)
+        if values is None:
+            found.extend(row_errors)
+            continue
+        products.append(_to_product(next_id, values))
+        next_id += 1
 
     return products
+
+
+def _detect_delimiter(header: str) -> str:
+    """Выбрать разделитель по строке заголовка: «;» или «,»."""
+    if header.count(";") > header.count(","):
+        return ";"
+    return ","
 
 
 def _cell(row: dict[str | None, str | list[str] | None], field: str) -> str | None:
@@ -84,10 +109,17 @@ def _cell(row: dict[str | None, str | list[str] | None], field: str) -> str | No
     return text
 
 
+def _normalize_decimal(text: str) -> str:
+    """Заменить одну десятичную запятую на точку: «6,5» → «6.5»."""
+    if text.count(",") == 1 and "." not in text:
+        return text.replace(",", ".")
+    return text
+
+
 def _parse_number(text: str) -> tuple[float | None, str | None]:
     """Вернуть число либо причину отказа: number или negative."""
     try:
-        value = float(text)
+        value = float(_normalize_decimal(text))
     except ValueError:
         return None, "number"
     if not math.isfinite(value):

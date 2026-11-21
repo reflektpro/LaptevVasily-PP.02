@@ -51,5 +51,6 @@ PYTHONPATH=src pytest
 - День 14 — сравнение съеденного с нормой (`compare_with_norm`): остаток, перебор или «в норме». Версия 0.14.0.
 - День 15 — экспорт дневного отчёта в текстовый и CSV файл (`export_report_text`, `export_report_csv`). Версия 0.15.0.
 - День 16 — сводные unit-тесты моделей и расчётов (`tests/test_calculations.py`); `daily_norm` и `compare_with_norm` отклоняют бесконечность и NaN. Версия 0.16.0.
+- День 17 — импорт CSV на граничных случаях: UTF-8 с BOM, разделитель «;» и десятичная запятая, пустой файл, файл не в UTF-8 (ошибка строки 1); тесты `tests/test_csv_edge_cases.py`. Версия 0.17.0.
 
 Запуск меню: `PYTHONPATH=src python3 -m calorie_calc`.
