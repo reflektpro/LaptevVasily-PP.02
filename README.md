@@ -20,7 +20,7 @@
 .
 ├── data/                 # внешние файлы данных (CSV, JSON)
 ├── docs/                 # ход выполнения практики
-├── src/calorie_calc/     # исходный код модуля (Product, import_products, ProductCatalog, calculate_portion)
+├── src/calorie_calc/     # исходный код модуля (Product, import_products, load_products, ProductCatalog, calculate_portion)
 ├── tests/                # автотесты
 ├── requirements.txt
 └── README.md
@@ -53,5 +53,6 @@ PYTHONPATH=src pytest
 - День 16 — сводные unit-тесты моделей и расчётов (`tests/test_calculations.py`); `daily_norm` и `compare_with_norm` отклоняют бесконечность и NaN. Версия 0.16.0.
 - День 17 — импорт CSV на граничных случаях: UTF-8 с BOM, разделитель «;» и десятичная запятая, пустой файл, файл не в UTF-8 (ошибка строки 1); тесты `tests/test_csv_edge_cases.py`. Версия 0.17.0.
 - День 18 — импорт базы продуктов из JSON (`import_products_json`): список объектов или объект с ключом `products`, проверка полей, ошибки `JsonItemError`; файл `data/products.json` с теми же 26 продуктами. Версия 0.18.0.
+- День 19 — загрузка базы по расширению файла (`load_products`): .csv или .json без учёта регистра, другое расширение — `ValueError`; `ProductCatalog` и пункт меню «Импорт» принимают CSV и JSON. Версия 0.19.0.
 
 Запуск меню: `PYTHONPATH=src python3 -m calorie_calc`.

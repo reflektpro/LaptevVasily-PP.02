@@ -2,11 +2,12 @@
 
 from calorie_calc.catalog import ProductCatalog
 from calorie_calc.csv_import import CsvRowError
+from calorie_calc.json_import import JsonItemError
 from calorie_calc.diary import MEAL_TYPES, MealEntry, total_nutrients
 from calorie_calc.models import PortionNutrients, Product
 
 MENU = """
-1. Импорт продуктов из CSV
+1. Импорт продуктов из файла (CSV или JSON)
 2. Поиск продукта
 3. Расчёт порции
 4. Добавить в рацион
@@ -43,16 +44,22 @@ def _choose_product(catalog: ProductCatalog) -> Product | None:
 
 
 def _import(catalog: ProductCatalog) -> ProductCatalog:
-    path = input("Путь к CSV-файлу: ").strip()
-    errors: list[CsvRowError] = []
+    path = input("Путь к файлу CSV или JSON: ").strip()
+    errors: list[CsvRowError | JsonItemError] = []
     try:
         new_catalog = ProductCatalog(path, errors)
+    except ValueError:
+        print("Поддерживаются только файлы .csv и .json.")
+        return catalog
     except OSError:
         print("Не удалось открыть файл.")
         return catalog
     print(f"Загружено продуктов: {len(new_catalog)}.")
     for error in errors:
-        print(f"Строка {error.line}: {error.message}")
+        if isinstance(error, JsonItemError):
+            print(f"Элемент {error.item}: {error.message}")
+        else:
+            print(f"Строка {error.line}: {error.message}")
     return new_catalog
 
 

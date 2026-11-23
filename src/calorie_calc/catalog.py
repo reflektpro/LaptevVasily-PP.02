@@ -1,8 +1,10 @@
-"""Каталог продуктов: загрузка из CSV, поиск, изменение списка и расчёт порции."""
+"""Каталог продуктов: загрузка из CSV или JSON, поиск, изменение списка и расчёт порции."""
 
 from pathlib import Path
 
-from calorie_calc.csv_import import CsvRowError, import_products
+from calorie_calc.csv_import import CsvRowError
+from calorie_calc.json_import import JsonItemError
+from calorie_calc.loader import load_products
 from calorie_calc.models import (
     PortionNutrients,
     Product,
@@ -16,11 +18,12 @@ _DEFAULT_PRODUCTS_CSV = (
 
 
 class ProductCatalog:
-    """Хранит продукты в памяти и загружает их из CSV при создании.
+    """Хранит продукты в памяти и загружает их из файла при создании.
 
-    По умолчанию читается data/products.csv. Чтение и проверка строк
-    выполняются через import_products: в каталог попадают только строки
-    с заполненными обязательными полями и неотрицательными числами.
+    По умолчанию читается data/products.csv. Формат выбирается по
+    расширению через load_products: .csv или .json (без учёта регистра).
+    В каталог попадают только записи с заполненными обязательными полями
+    и неотрицательными числами.
     Поиск по названию не учитывает регистр: точное совпадение и подстрока.
     Продукт можно добавить, обновить и удалить. Название в каталоге
     уникально без учёта регистра. Для продукта из каталога считается
@@ -30,10 +33,10 @@ class ProductCatalog:
     def __init__(
         self,
         path: str | Path | None = None,
-        errors: list[CsvRowError] | None = None,
+        errors: list[CsvRowError | JsonItemError] | None = None,
     ) -> None:
         source = _DEFAULT_PRODUCTS_CSV if path is None else path
-        self._products = list(import_products(source, errors))
+        self._products = list(load_products(source, errors))
         self._next_id = (
             max((product.id for product in self._products), default=0) + 1
         )
