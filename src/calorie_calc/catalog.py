@@ -1,8 +1,9 @@
-"""Каталог продуктов: загрузка из CSV или JSON, поиск, изменение списка и расчёт порции."""
+"""Каталог продуктов: загрузка и сохранение в CSV или JSON, поиск, изменение списка и расчёт порции."""
 
 from pathlib import Path
 
 from calorie_calc.csv_import import CsvRowError
+from calorie_calc.export import save_products
 from calorie_calc.json_import import JsonItemError
 from calorie_calc.loader import load_products
 from calorie_calc.models import (
@@ -27,7 +28,8 @@ class ProductCatalog:
     Поиск по названию не учитывает регистр: точное совпадение и подстрока.
     Продукт можно добавить, обновить и удалить. Название в каталоге
     уникально без учёта регистра. Для продукта из каталога считается
-    КБЖУ порции заданной массы.
+    КБЖУ порции заданной массы. Каталог можно сохранить в CSV или JSON
+    методом save.
     """
 
     def __init__(
@@ -45,6 +47,16 @@ class ProductCatalog:
     def products(self) -> tuple[Product, ...]:
         """Продукты в порядке загрузки и последующего добавления."""
         return tuple(self._products)
+
+    def save(self, path: str | Path) -> Path:
+        """Сохранить продукты каталога в CSV или JSON по расширению файла.
+
+        Используется save_products: файл в том же формате, что читает
+        импорт, поэтому ProductCatalog(path) восстановит те же продукты
+        в том же порядке. Идентификаторы при повторной загрузке
+        назначаются заново по порядку.
+        """
+        return save_products(self._products, path)
 
     def add_product(
         self,
