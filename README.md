@@ -55,5 +55,6 @@ PYTHONPATH=src pytest
 - День 18 — импорт базы продуктов из JSON (`import_products_json`): список объектов или объект с ключом `products`, проверка полей, ошибки `JsonItemError`; файл `data/products.json` с теми же 26 продуктами. Версия 0.18.0.
 - День 19 — загрузка базы по расширению файла (`load_products`): .csv или .json без учёта регистра, другое расширение — `ValueError`; `ProductCatalog` и пункт меню «Импорт» принимают CSV и JSON. Версия 0.19.0.
 - День 20 — экспорт базы продуктов в CSV и JSON (`export_products_csv`, `export_products_json`, `save_products` по расширению) в тех же форматах, что читает импорт; метод `ProductCatalog.save`. Версия 0.20.0.
+- День 21 — пункт меню «Экспорт каталога в файл (CSV или JSON)»: текущий каталог сохраняется через `ProductCatalog.save`, неподдерживаемое расширение и ошибка записи выводятся сообщением. Версия 0.21.0.
 
 Запуск меню: `PYTHONPATH=src python3 -m calorie_calc`.

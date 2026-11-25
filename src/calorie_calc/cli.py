@@ -1,4 +1,4 @@
-"""Консольное меню: импорт, поиск, порция, рацион."""
+"""Консольное меню: импорт, поиск, порция, рацион, экспорт каталога."""
 
 from calorie_calc.catalog import ProductCatalog
 from calorie_calc.csv_import import CsvRowError
@@ -12,6 +12,7 @@ MENU = """
 3. Расчёт порции
 4. Добавить в рацион
 5. Показать рацион и итог за день
+6. Экспорт каталога в файл (CSV или JSON)
 0. Выход"""
 
 
@@ -61,6 +62,20 @@ def _import(catalog: ProductCatalog) -> ProductCatalog:
         else:
             print(f"Строка {error.line}: {error.message}")
     return new_catalog
+
+
+def _export(catalog: ProductCatalog) -> None:
+    """Сохранить текущий каталог (с изменениями) в CSV или JSON."""
+    path = input("Путь к файлу CSV или JSON для сохранения: ").strip()
+    try:
+        saved = catalog.save(path)
+    except ValueError:
+        print("Поддерживаются только файлы .csv и .json.")
+        return
+    except OSError:
+        print("Не удалось сохранить файл.")
+        return
+    print(f"Сохранено продуктов: {len(catalog)} в файл {saved}.")
 
 
 def _search(catalog: ProductCatalog) -> None:
@@ -129,5 +144,7 @@ def run(catalog: ProductCatalog | None = None) -> None:
             _add_to_diary(catalog, diary)
         elif choice == "5":
             _show_diary(diary)
+        elif choice == "6":
+            _export(catalog)
         else:
             print("Неизвестный пункт меню.")

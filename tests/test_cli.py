@@ -83,3 +83,38 @@ def test_diary_invalid_meal(monkeypatch, capsys, tmp_path):
     )
     assert "Ошибка:" in out
     assert "Рацион пуст." in out
+
+
+def test_export_csv_and_reload(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    catalog.add_product("Сыр", 350, 25, 27, 0)
+    target = tmp_path / "out.csv"
+    out = _run_menu(monkeypatch, capsys, ["6", str(target), "0"], catalog)
+    assert f"Сохранено продуктов: 3 в файл {target}." in out
+    names = [product.name for product in ProductCatalog(target).products]
+    assert names == ["Яблоко", "Хлеб", "Сыр"]
+
+
+def test_export_json_then_import(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    target = tmp_path / "out.JSON"
+    answers = ["6", str(target), "1", str(target), "2", "хлеб", "0"]
+    out = _run_menu(monkeypatch, capsys, answers, catalog)
+    assert "Сохранено продуктов: 2" in out
+    assert "Загружено продуктов: 2." in out
+    assert "Хлеб: 250.0 ккал на 100 г" in out
+
+
+def test_export_unsupported_format(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    target = tmp_path / "out.txt"
+    out = _run_menu(monkeypatch, capsys, ["6", str(target), "0"], catalog)
+    assert "Поддерживаются только файлы .csv и .json." in out
+    assert not target.exists()
+
+
+def test_export_unwritable_path(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    target = tmp_path / "missing_dir" / "out.csv"
+    out = _run_menu(monkeypatch, capsys, ["6", str(target), "0"], catalog)
+    assert "Не удалось сохранить файл." in out
