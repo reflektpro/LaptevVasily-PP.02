@@ -1,4 +1,4 @@
-"""Консольное меню: импорт, поиск, порция, рацион, экспорт каталога."""
+"""Консольное меню: импорт, поиск, порция, рацион, экспорт и правка каталога."""
 
 from calorie_calc.catalog import ProductCatalog
 from calorie_calc.csv_import import CsvRowError
@@ -13,6 +13,8 @@ MENU = """
 4. Добавить в рацион
 5. Показать рацион и итог за день
 6. Экспорт каталога в файл (CSV или JSON)
+7. Добавить продукт в каталог
+8. Удалить продукт из каталога
 0. Выход"""
 
 
@@ -76,6 +78,34 @@ def _export(catalog: ProductCatalog) -> None:
         print("Не удалось сохранить файл.")
         return
     print(f"Сохранено продуктов: {len(catalog)} в файл {saved}.")
+
+
+def _add_product(catalog: ProductCatalog) -> None:
+    """Спросить название и КБЖУ на 100 г и добавить продукт в каталог."""
+    name = input("Название продукта: ")
+    try:
+        kcal = _read_number(input("Калорийность на 100 г, ккал: "))
+        protein = _read_number(input("Белки на 100 г, г: "))
+        fat = _read_number(input("Жиры на 100 г, г: "))
+        carbs = _read_number(input("Углеводы на 100 г, г: "))
+        product = catalog.add_product(name, kcal, protein, fat, carbs)
+    except ValueError as error:
+        print(f"Ошибка: {error}")
+        return
+    print(f"Продукт «{product.name}» добавлен (id {product.id}).")
+
+
+def _remove_product(catalog: ProductCatalog) -> None:
+    """Найти продукт по названию и удалить его после подтверждения."""
+    product = _choose_product(catalog)
+    if product is None:
+        return
+    answer = input(f"Удалить «{product.name}»? (д/н): ").strip().lower()
+    if answer not in ("д", "да", "y", "yes"):
+        print("Удаление отменено.")
+        return
+    catalog.remove_product(product.id)
+    print(f"Продукт «{product.name}» удалён.")
 
 
 def _search(catalog: ProductCatalog) -> None:
@@ -146,5 +176,9 @@ def run(catalog: ProductCatalog | None = None) -> None:
             _show_diary(diary)
         elif choice == "6":
             _export(catalog)
+        elif choice == "7":
+            _add_product(catalog)
+        elif choice == "8":
+            _remove_product(catalog)
         else:
             print("Неизвестный пункт меню.")

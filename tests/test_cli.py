@@ -118,3 +118,72 @@ def test_export_unwritable_path(monkeypatch, capsys, tmp_path):
     target = tmp_path / "missing_dir" / "out.csv"
     out = _run_menu(monkeypatch, capsys, ["6", str(target), "0"], catalog)
     assert "Не удалось сохранить файл." in out
+
+
+def test_add_product(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    answers = ["7", "Творог", "121", "17,2", "5", "1.8", "2", "твор", "0"]
+    out = _run_menu(monkeypatch, capsys, answers, catalog)
+    assert "Продукт «Творог» добавлен (id 3)." in out
+    assert "Творог: 121.0 ккал на 100 г (Б 17.2, Ж 5.0, У 1.8)" in out
+    assert len(catalog) == 3
+
+
+def test_add_product_duplicate_name(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    answers = ["7", "яблоко", "50", "0", "0", "13", "0"]
+    out = _run_menu(monkeypatch, capsys, answers, catalog)
+    assert "Ошибка:" in out
+    assert len(catalog) == 2
+
+
+def test_add_product_invalid_number(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    answers = ["7", "Сыр", "много", "0"]
+    out = _run_menu(monkeypatch, capsys, answers, catalog)
+    assert "Ошибка:" in out
+    assert len(catalog) == 2
+
+
+def test_add_product_negative_value(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    answers = ["7", "Сыр", "350", "-1", "27", "0", "0"]
+    out = _run_menu(monkeypatch, capsys, answers, catalog)
+    assert "Ошибка:" in out
+    assert len(catalog) == 2
+
+
+def test_remove_product(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    answers = ["8", "хлеб", "д", "2", "хлеб", "0"]
+    out = _run_menu(monkeypatch, capsys, answers, catalog)
+    assert "Продукт «Хлеб» удалён." in out
+    assert "Ничего не найдено." in out
+    assert [product.name for product in catalog.products] == ["Яблоко"]
+
+
+def test_remove_product_cancelled(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    out = _run_menu(monkeypatch, capsys, ["8", "хлеб", "н", "0"], catalog)
+    assert "Удаление отменено." in out
+    assert len(catalog) == 2
+
+
+def test_remove_product_not_found(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    out = _run_menu(monkeypatch, capsys, ["8", "сыр", "0"], catalog)
+    assert "Продукт не найден." in out
+    assert len(catalog) == 2
+
+
+def test_add_remove_then_export(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    target = tmp_path / "edited.json"
+    answers = [
+        "7", "Кефир", "41", "3", "1", "4",
+        "8", "яблоко", "да",
+        "6", str(target), "0",
+    ]
+    _run_menu(monkeypatch, capsys, answers, catalog)
+    names = [product.name for product in ProductCatalog(target).products]
+    assert names == ["Хлеб", "Кефир"]
