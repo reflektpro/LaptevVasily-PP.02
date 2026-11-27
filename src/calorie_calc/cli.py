@@ -15,6 +15,7 @@ MENU = """
 6. Экспорт каталога в файл (CSV или JSON)
 7. Добавить продукт в каталог
 8. Удалить продукт из каталога
+9. Изменить продукт в каталоге
 0. Выход"""
 
 
@@ -108,6 +109,39 @@ def _remove_product(catalog: ProductCatalog) -> None:
     print(f"Продукт «{product.name}» удалён.")
 
 
+def _ask_value(prompt: str, current: float) -> float:
+    """Спросить число; пустой ввод оставляет текущее значение."""
+    text = input(f"{prompt} [{current:g}]: ").strip()
+    if not text:
+        return current
+    return _read_number(text)
+
+
+def _edit_product(catalog: ProductCatalog) -> None:
+    """Найти продукт по названию и изменить его название и КБЖУ на 100 г.
+
+    Пустой ввод оставляет прежнее значение поля.
+    """
+    product = _choose_product(catalog)
+    if product is None:
+        return
+    name = input(f"Новое название [{product.name}]: ").strip() or product.name
+    try:
+        kcal = _ask_value("Калорийность на 100 г, ккал", product.kcal_per_100g)
+        protein = _ask_value("Белки на 100 г, г", product.protein_per_100g)
+        fat = _ask_value("Жиры на 100 г, г", product.fat_per_100g)
+        carbs = _ask_value("Углеводы на 100 г, г", product.carbs_per_100g)
+        updated = catalog.update_product(product.id, name, kcal, protein, fat, carbs)
+    except ValueError as error:
+        print(f"Ошибка: {error}")
+        return
+    print(
+        f"Продукт «{updated.name}» изменён: {updated.kcal_per_100g:g} ккал на 100 г "
+        f"(Б {updated.protein_per_100g:g}, Ж {updated.fat_per_100g:g}, "
+        f"У {updated.carbs_per_100g:g})."
+    )
+
+
 def _search(catalog: ProductCatalog) -> None:
     found = catalog.find_by_name(input("Запрос: "))
     if not found:
@@ -180,5 +214,7 @@ def run(catalog: ProductCatalog | None = None) -> None:
             _add_product(catalog)
         elif choice == "8":
             _remove_product(catalog)
+        elif choice == "9":
+            _edit_product(catalog)
         else:
             print("Неизвестный пункт меню.")

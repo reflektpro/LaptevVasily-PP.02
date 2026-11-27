@@ -29,7 +29,7 @@ def test_exit(monkeypatch, capsys):
 
 
 def test_unknown_item(monkeypatch, capsys):
-    out = _run_menu(monkeypatch, capsys, ["9", "0"])
+    out = _run_menu(monkeypatch, capsys, ["42", "0"])
     assert "Неизвестный пункт меню." in out
 
 
@@ -187,3 +187,68 @@ def test_add_remove_then_export(monkeypatch, capsys, tmp_path):
     _run_menu(monkeypatch, capsys, answers, catalog)
     names = [product.name for product in ProductCatalog(target).products]
     assert names == ["Хлеб", "Кефир"]
+
+
+def test_edit_product(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    old_id = catalog.find_by_name("Яблоко")[0].id
+    out = _run_menu(
+        monkeypatch, capsys,
+        ["9", "Яблоко", "Яблоко зелёное", "47", "0,4", "", "9,8", "0"],
+        catalog,
+    )
+    assert "Продукт «Яблоко зелёное» изменён: 47 ккал на 100 г" in out
+    product = catalog.find_by_name("Яблоко зелёное")[0]
+    assert product.id == old_id
+    assert product.protein_per_100g == 0.4
+    assert product.fat_per_100g == 0.2
+    assert product.carbs_per_100g == 9.8
+    assert len(catalog) == 2
+
+
+def test_edit_product_keep_all_values(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    before = catalog.find_by_name("Хлеб")[0]
+    out = _run_menu(monkeypatch, capsys, ["9", "Хлеб", "", "", "", "", "", "0"], catalog)
+    assert "Продукт «Хлеб» изменён" in out
+    assert catalog.find_by_name("Хлеб")[0] == before
+
+
+def test_edit_product_duplicate_name(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    out = _run_menu(monkeypatch, capsys, ["9", "Хлеб", "яблоко", "", "", "", "", "0"], catalog)
+    assert "Ошибка:" in out
+    assert catalog.find_by_name("Хлеб")[0].name == "Хлеб"
+
+
+def test_edit_product_invalid_number(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    out = _run_menu(monkeypatch, capsys, ["9", "Хлеб", "", "много", "0"], catalog)
+    assert "Ошибка:" in out
+    assert catalog.find_by_name("Хлеб")[0].kcal_per_100g == 250
+
+
+def test_edit_product_negative_value(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    out = _run_menu(monkeypatch, capsys, ["9", "Хлеб", "", "", "-1", "", "", "0"], catalog)
+    assert "Ошибка:" in out
+    assert catalog.find_by_name("Хлеб")[0].protein_per_100g == 8
+
+
+def test_edit_product_not_found(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    out = _run_menu(monkeypatch, capsys, ["9", "Банан", "0"], catalog)
+    assert "Продукт не найден." in out
+
+
+def test_edit_then_export(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    target = tmp_path / "edited.json"
+    _run_menu(
+        monkeypatch, capsys,
+        ["9", "Хлеб", "Хлеб ржаной", "210", "", "", "", "6", str(target), "0"],
+        catalog,
+    )
+    reloaded = ProductCatalog(target)
+    assert reloaded.find_by_name("Хлеб ржаной")[0].kcal_per_100g == 210
+    assert len(reloaded) == 2
