@@ -252,3 +252,64 @@ def test_edit_then_export(monkeypatch, capsys, tmp_path):
     reloaded = ProductCatalog(target)
     assert reloaded.find_by_name("Хлеб ржаной")[0].kcal_per_100g == 210
     assert len(reloaded) == 2
+
+
+# Норма: м, 70 кг, 175 см, 30 лет, средняя -> (700 + 1093.75 - 150 + 5) * 1.55 = 2555.56
+
+
+def test_norm_with_empty_diary(monkeypatch, capsys):
+    out = _run_menu(
+        monkeypatch, capsys, ["10", "м", "70", "175", "30", "средняя", "0"]
+    )
+    assert "Дневная норма: 2555.56 ккал. Съедено: 0 ккал." in out
+    assert "До нормы осталось 2555.56 ккал." in out
+
+
+def test_norm_after_diary_remaining(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    out = _run_menu(
+        monkeypatch, capsys,
+        ["4", "Хлеб", "200", "обед", "10", "м", "70", "175", "30", "средняя", "0"],
+        catalog,
+    )
+    assert "Съедено: 500 ккал." in out
+    assert "До нормы осталось 2055.56 ккал." in out
+
+
+def test_norm_excess(monkeypatch, capsys, tmp_path):
+    catalog = ProductCatalog(_csv(tmp_path))
+    # ж, 50 кг, 160 см, 40 лет, минимальная -> (500 + 1000 - 200 - 161) * 1.2 = 1366.8
+    out = _run_menu(
+        monkeypatch, capsys,
+        ["4", "Хлеб", "600", "ужин", "10", "Ж", "50", "160", "40", "минимальная", "0"],
+        catalog,
+    )
+    assert "Дневная норма: 1366.8 ккал. Съедено: 1500 ккал." in out
+    assert "Норма превышена на 133.2 ккал." in out
+
+
+def test_norm_decimal_comma(monkeypatch, capsys):
+    out = _run_menu(
+        monkeypatch, capsys, ["10", "м", "70,0", "175,0", "30", "Средняя", "0"]
+    )
+    assert "Дневная норма: 2555.56 ккал." in out
+
+
+def test_norm_invalid_sex(monkeypatch, capsys):
+    out = _run_menu(
+        monkeypatch, capsys, ["10", "x", "70", "175", "30", "средняя", "0"]
+    )
+    assert "Ошибка: пол должен быть «м» или «ж»" in out
+
+
+def test_norm_invalid_number(monkeypatch, capsys):
+    out = _run_menu(monkeypatch, capsys, ["10", "м", "много", "0"])
+    assert "Ошибка:" in out
+    assert "Дневная норма:" not in out
+
+
+def test_norm_unknown_activity(monkeypatch, capsys):
+    out = _run_menu(
+        monkeypatch, capsys, ["10", "м", "70", "175", "30", "лежачая", "0"]
+    )
+    assert "Ошибка: неизвестный уровень активности" in out

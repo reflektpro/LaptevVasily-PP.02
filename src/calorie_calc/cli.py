@@ -1,10 +1,11 @@
-"""Консольное меню: импорт, поиск, порция, рацион, экспорт и правка каталога."""
+"""Консольное меню: импорт, поиск, порция, рацион, норма, экспорт и правка каталога."""
 
 from calorie_calc.catalog import ProductCatalog
 from calorie_calc.csv_import import CsvRowError
 from calorie_calc.json_import import JsonItemError
 from calorie_calc.diary import MEAL_TYPES, MealEntry, total_nutrients
 from calorie_calc.models import PortionNutrients, Product
+from calorie_calc.norm import ACTIVITY_LEVELS, compare_with_norm, daily_norm
 
 MENU = """
 1. Импорт продуктов из файла (CSV или JSON)
@@ -16,6 +17,7 @@ MENU = """
 7. Добавить продукт в каталог
 8. Удалить продукт из каталога
 9. Изменить продукт в каталоге
+10. Дневная норма и сравнение с рационом
 0. Выход"""
 
 
@@ -188,6 +190,29 @@ def _show_diary(diary: list[MealEntry]) -> None:
     print("Итого за день: " + _format_nutrients(total_nutrients(diary)))
 
 
+def _norm(diary: list[MealEntry]) -> None:
+    """Рассчитать дневную норму калорий и сравнить с ней рацион за день."""
+    sex = input("Пол (м/ж): ")
+    try:
+        weight = _read_number(input("Вес, кг: "))
+        height = _read_number(input("Рост, см: "))
+        age = int(input("Возраст, лет: ").strip())
+        activity = input(f"Активность ({', '.join(ACTIVITY_LEVELS)}): ")
+        norm = daily_norm(sex, weight, height, age, activity)
+    except ValueError as error:
+        print(f"Ошибка: {error}")
+        return
+    eaten = total_nutrients(diary).kcal
+    result = compare_with_norm(eaten, norm)
+    print(f"Дневная норма: {norm:g} ккал. Съедено: {eaten:g} ккал.")
+    if result["status"] == "остаток":
+        print(f"До нормы осталось {result['remaining']:g} ккал.")
+    elif result["status"] == "перебор":
+        print(f"Норма превышена на {result['excess']:g} ккал.")
+    else:
+        print("Съедено ровно по норме.")
+
+
 def run(catalog: ProductCatalog | None = None) -> None:
     """Цикл меню до выбора пункта «Выход»."""
     if catalog is None:
@@ -216,5 +241,7 @@ def run(catalog: ProductCatalog | None = None) -> None:
             _remove_product(catalog)
         elif choice == "9":
             _edit_product(catalog)
+        elif choice == "10":
+            _norm(diary)
         else:
             print("Неизвестный пункт меню.")
